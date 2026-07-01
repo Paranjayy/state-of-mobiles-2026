@@ -1,1 +1,10 @@
-.DS_Store
+node_modules/
+.next/
+build-output.log
+build-exit.log
+do-build.sh
+build.sh
+install.sh
+deploy.sh
+nohup.out
+*.log
