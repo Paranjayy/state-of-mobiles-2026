@@ -5,3 +5,4 @@ build.log
 build-status.log
 *.log
 .DS_Store
+tsconfig.tsbuildinfo
