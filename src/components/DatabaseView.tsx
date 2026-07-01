@@ -1,6 +1,8 @@
 "use client";
 import { useState, useMemo } from "react";
-import { allPhones, type Phone } from "@/data/phones";
+import { phones, tablets, laptops, pcs } from "@/data/devices";
+
+type DeviceKind = "all" | "phone" | "tablet" | "laptop" | "pc";
 
 type SortKey =
   | "price-asc"
@@ -9,36 +11,65 @@ type SortKey =
   | "battery-desc"
   | "charging-desc"
   | "name-asc"
-  | "ram-desc";
+  | "ram-desc"
+  | "performance-desc";
 
-type GroupKey = "none" | "category" | "brand" | "processor" | "displayType";
+type GroupKey = "none" | "category" | "brand" | "type";
+
+type AnyDevice = {
+  id: string;
+  brand: string;
+  name: string;
+  price: number;
+  priceFormatted: string;
+  category: string;
+  type: string;
+  image: string;
+  tags: string[];
+  verdict: string;
+  releaseDate: string;
+  benchmarks: any;
+  specs: any;
+  pickFor?: string;
+  pickLabel?: string;
+};
+
+const allDevices: (AnyDevice & { kind: DeviceKind })[] = [
+  ...phones.map((p) => ({ ...p, kind: "phone" as const })),
+  ...tablets.map((t) => ({ ...t, kind: "tablet" as const })),
+  ...laptops.map((l) => ({ ...l, kind: "laptop" as const })),
+  ...pcs.map((c) => ({ ...c, kind: "pc" as const })),
+];
 
 export default function DatabaseView() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("price-asc");
   const [groupBy, setGroupBy] = useState<GroupKey>("none");
-  const [view, setView] = useState<"table" | "cards" | "compare">("table");
+  const [view, setView] = useState<"table" | "cards">("table");
+  const [kindFilter, setKindFilter] = useState<DeviceKind>("all");
   const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(250000);
+  const [priceMax, setPriceMax] = useState(400000);
   const [filterBrand, setFilterBrand] = useState<string>("all");
-  const [filterOIS, setFilterOIS] = useState(false);
 
   const filtered = useMemo(() => {
-    let result = allPhones.filter((p) => {
+    let result = allDevices.filter((d) => {
+      if (kindFilter !== "all" && d.kind !== kindFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (
-          !p.name.toLowerCase().includes(q) &&
-          !p.brand.toLowerCase().includes(q) &&
-          !p.specs.processor.toLowerCase().includes(q) &&
-          !p.tags.some((t) => t.toLowerCase().includes(q))
-        ) {
-          return false;
-        }
+        const haystack = [
+          d.name,
+          d.brand,
+          d.specs?.processor || "",
+          d.specs?.gpu || "",
+          ...(d.tags || []),
+          d.type,
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
       }
-      if (p.price < priceMin || p.price > priceMax) return false;
-      if (filterBrand !== "all" && p.brand !== filterBrand) return false;
-      if (filterOIS && !p.specs.cameraOIS) return false;
+      if (d.price < priceMin || d.price > priceMax) return false;
+      if (filterBrand !== "all" && d.brand !== filterBrand) return false;
       return true;
     });
 
@@ -48,57 +79,108 @@ export default function DatabaseView() {
           return a.price - b.price;
         case "price-desc":
           return b.price - a.price;
-        case "antutu-desc":
-          return b.benchmarks.antutu - a.benchmarks.antutu;
-        case "battery-desc":
-          return b.specs.batteryMah - a.specs.batteryMah;
-        case "charging-desc":
-          return b.benchmarks.chargingSpeed - a.benchmarks.chargingSpeed;
         case "name-asc":
           return a.name.localeCompare(b.name);
         case "ram-desc":
-          return b.specs.ram - a.specs.ram;
+          return (b.specs?.ram || 0) - (a.specs?.ram || 0);
+        case "antutu-desc":
+          return (b.benchmarks?.antutu || 0) - (a.benchmarks?.antutu || 0);
+        case "battery-desc":
+          return (
+            (b.benchmarks?.batteryLife || 0) - (a.benchmarks?.batteryLife || 0)
+          );
+        case "charging-desc":
+          return (
+            (b.benchmarks?.chargingSpeed || 0) -
+            (a.benchmarks?.chargingSpeed || 0)
+          );
+        case "performance-desc":
+          return (
+            (b.benchmarks?.antutu ||
+              b.benchmarks?.pcbMark ||
+              b.benchmarks?.cinebenchR23Multi ||
+              0) -
+            (a.benchmarks?.antutu ||
+              a.benchmarks?.pcbMark ||
+              a.benchmarks?.cinebenchR23Multi ||
+              0)
+          );
       }
     });
 
     return result;
-  }, [search, sort, priceMin, priceMax, filterBrand, filterOIS]);
+  }, [search, sort, priceMin, priceMax, filterBrand, kindFilter]);
 
   const grouped = useMemo(() => {
-    if (groupBy === "none") return { "All Phones": filtered };
-    const groups: Record<string, Phone[]> = {};
-    filtered.forEach((p) => {
+    if (groupBy === "none") return { "All Devices": filtered };
+    const groups: Record<string, typeof filtered> = {};
+    filtered.forEach((d) => {
       let key: string;
       switch (groupBy) {
         case "category":
-          key = p.category.toUpperCase();
+          key = d.category.toUpperCase();
           break;
         case "brand":
-          key = p.brand;
+          key = d.brand;
           break;
-        case "processor":
-          key = p.specs.processorCategory.toUpperCase();
-          break;
-        case "displayType":
-          key = p.specs.displayType;
+        case "type":
+          key = d.type.toUpperCase();
           break;
         default:
           key = "All";
       }
       if (!groups[key]) groups[key] = [];
-      groups[key].push(p);
+      groups[key].push(d);
     });
     return groups;
   }, [filtered, groupBy]);
 
-  const brands = Array.from(new Set(allPhones.map((p) => p.brand))).sort();
+  const brands = Array.from(new Set(allDevices.map((d) => d.brand))).sort();
+
+  const kindLabel = (k: DeviceKind) => {
+    const map = {
+      all: "All",
+      phone: "Phones",
+      tablet: "Tablets",
+      laptop: "Laptops",
+      pc: "PCs",
+    };
+    return map[k];
+  };
+
+  // Count by kind
+  const counts = {
+    all: allDevices.length,
+    phone: phones.length,
+    tablet: tablets.length,
+    laptop: laptops.length,
+    pc: pcs.length,
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Kind tabs */}
+      <div className="flex flex-wrap gap-2">
+        {(["all", "phone", "tablet", "laptop", "pc"] as DeviceKind[]).map(
+          (k) => (
+            <button
+              key={k}
+              onClick={() => setKindFilter(k)}
+              className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider border transition-colors ${
+                kindFilter === k
+                  ? "bg-[var(--color-accent)] text-[var(--color-bg)] border-[var(--color-accent)]"
+                  : "bg-[var(--color-surface)] text-[var(--color-text-dim)] border-[var(--color-border)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              {kindLabel(k)} <span className="opacity-60">· {counts[k]}</span>
+            </button>
+          ),
+        )}
+      </div>
+
       {/* Controls bar */}
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 md:p-5">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* Search */}
           <div className="md:col-span-5">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               Search
@@ -118,7 +200,7 @@ export default function DatabaseView() {
               </svg>
               <input
                 type="text"
-                placeholder="Name, brand, processor, tag…"
+                placeholder="Name, brand, processor, GPU, tag…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-lg pl-10 pr-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
@@ -126,7 +208,6 @@ export default function DatabaseView() {
             </div>
           </div>
 
-          {/* Sort */}
           <div className="md:col-span-3">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               Sort by
@@ -138,15 +219,15 @@ export default function DatabaseView() {
             >
               <option value="price-asc">Price (Low → High)</option>
               <option value="price-desc">Price (High → Low)</option>
+              <option value="performance-desc">Performance (best first)</option>
               <option value="antutu-desc">AnTuTu Score</option>
-              <option value="battery-desc">Battery Capacity</option>
+              <option value="battery-desc">Battery Life</option>
               <option value="charging-desc">Charging Speed</option>
               <option value="ram-desc">RAM</option>
               <option value="name-asc">Name (A-Z)</option>
             </select>
           </div>
 
-          {/* Group by */}
           <div className="md:col-span-2">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               Group by
@@ -157,20 +238,18 @@ export default function DatabaseView() {
               className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]/50"
             >
               <option value="none">No grouping</option>
-              <option value="category">Category</option>
+              <option value="category">Price tier</option>
               <option value="brand">Brand</option>
-              <option value="processor">Chip tier</option>
-              <option value="displayType">Display type</option>
+              <option value="type">Type</option>
             </select>
           </div>
 
-          {/* View toggle */}
           <div className="md:col-span-2">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               View
             </label>
             <div className="flex gap-1 bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-lg p-1">
-              {(["table", "cards", "compare"] as const).map((v) => (
+              {(["table", "cards"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -187,9 +266,8 @@ export default function DatabaseView() {
           </div>
         </div>
 
-        {/* Advanced filters row */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mt-3 pt-3 border-t border-[var(--color-border)]">
-          <div className="md:col-span-4">
+          <div className="md:col-span-5">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               Price: ₹{priceMin.toLocaleString()} – ₹{priceMax.toLocaleString()}
             </label>
@@ -197,7 +275,7 @@ export default function DatabaseView() {
               <input
                 type="range"
                 min="0"
-                max="250000"
+                max="400000"
                 step="1000"
                 value={priceMin}
                 onChange={(e) => setPriceMin(Number(e.target.value))}
@@ -206,7 +284,7 @@ export default function DatabaseView() {
               <input
                 type="range"
                 min="0"
-                max="250000"
+                max="400000"
                 step="1000"
                 value={priceMax}
                 onChange={(e) => setPriceMax(Number(e.target.value))}
@@ -215,7 +293,7 @@ export default function DatabaseView() {
             </div>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <label className="block text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1.5">
               Brand
             </label>
@@ -233,119 +311,124 @@ export default function DatabaseView() {
             </select>
           </div>
 
-          <div className="md:col-span-3 flex items-end">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterOIS}
-                onChange={(e) => setFilterOIS(e.target.checked)}
-                className="accent-[var(--color-accent)]"
-              />
-              <span className="text-sm text-[var(--color-text-dim)]">
-                OIS only (stabilized camera)
-              </span>
-            </label>
-          </div>
-
-          <div className="md:col-span-2 flex items-end justify-end">
-            <div className="text-[11px] font-mono text-[var(--color-text-muted)]">
+          <div className="md:col-span-3 flex items-end justify-end">
+            <button
+              onClick={() => {
+                setSearch("");
+                setPriceMin(0);
+                setPriceMax(400000);
+                setFilterBrand("all");
+                setKindFilter("all");
+              }}
+              className="px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-dim)] hover:text-[var(--color-text)]"
+            >
+              Clear filters ↺
+            </button>
+            <div className="ml-auto text-[11px] font-mono text-[var(--color-text-muted)] pl-4">
               <span className="text-[var(--color-accent)] font-semibold">
                 {filtered.length}
               </span>{" "}
-              of {allPhones.length} phones
+              of {allDevices.length} devices
             </div>
           </div>
         </div>
       </div>
 
-      {/* View render */}
+      {/* View */}
       {view === "table" && (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([group, phones]) => (
+        <div className="space-y-5">
+          {Object.entries(grouped).map(([group, items]) => (
             <div key={group}>
               {groupBy !== "none" && (
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-px flex-1 bg-[var(--color-border)]" />
                   <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
-                    {group} · {phones.length}
+                    {group} · {items.length}
                   </span>
                   <div className="h-px flex-1 bg-[var(--color-border)]" />
                 </div>
               )}
-              <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden overflow-x-auto">
+              <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)] border-b border-[var(--color-border)]">
-                      <th className="text-left px-4 py-3">Phone</th>
+                      <th className="text-left px-4 py-3">Device</th>
+                      <th className="text-left px-4 py-3 hidden md:table-cell">
+                        Type
+                      </th>
                       <th className="text-right px-4 py-3">Price</th>
-                      <th className="text-right px-4 py-3">AnTuTu</th>
-                      <th className="text-right px-4 py-3">Battery</th>
-                      <th className="text-right px-4 py-3 hidden md:table-cell">
-                        Charging
+                      <th className="text-right px-4 py-3 hidden lg:table-cell">
+                        Chip
                       </th>
                       <th className="text-right px-4 py-3 hidden md:table-cell">
                         RAM
                       </th>
                       <th className="text-right px-4 py-3 hidden lg:table-cell">
-                        Camera
+                        Score
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {phones.map((p, i) => (
-                      <tr
-                        key={p.id}
-                        className={`hover:bg-[var(--color-surface-2)] transition-colors ${
-                          i !== phones.length - 1
-                            ? "border-b border-[var(--color-border)]"
-                            : ""
-                        }`}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={p.image}
-                              alt={p.name}
-                              className="h-8 w-8 object-contain"
-                              onError={(e) =>
-                                ((e.target as HTMLImageElement).style.display = "none")
-                              }
-                            />
-                            <div>
-                              <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
-                                {p.brand}
-                              </div>
-                              <div className="font-medium text-[var(--color-text)]">
-                                {p.name}
+                    {items.map((d, i) => {
+                      const score =
+                        d.benchmarks?.antutu ||
+                        d.benchmarks?.pcbMark ||
+                        d.benchmarks?.cinebenchR23Multi ||
+                        0;
+                      return (
+                        <tr
+                          key={d.id}
+                          className={`hover:bg-[var(--color-surface-2)] transition-colors ${
+                            i !== items.length - 1
+                              ? "border-b border-[var(--color-border)]"
+                              : ""
+                          }`}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={d.image}
+                                alt={d.name}
+                                className="h-8 w-8 object-contain flex-shrink-0"
+                                onError={(e) =>
+                                  ((
+                                    e.target as HTMLImageElement
+                                  ).style.display = "none")
+                                }
+                              />
+                              <div className="min-w-0">
+                                <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)] truncate">
+                                  {d.brand}
+                                </div>
+                                <div className="font-medium text-[var(--color-text)] truncate">
+                                  {d.name}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-accent)]">
-                          {p.priceFormatted}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)]">
-                          {(p.benchmarks.antutu / 1000).toFixed(0)}K
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)]">
-                          {p.specs.batteryMah.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)] hidden md:table-cell">
-                          {p.benchmarks.chargingSpeed}W
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)] hidden md:table-cell">
-                          {p.specs.ram}GB
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)] hidden lg:table-cell">
-                          {p.specs.cameraMain}MP
-                          {p.specs.cameraOIS && (
-                            <span className="ml-1 text-[var(--color-accent)]">
-                              •OIS
+                          </td>
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-dim)] border border-[var(--color-border)] px-1.5 py-0.5 rounded">
+                              {d.type}
                             </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-[var(--color-accent)] font-semibold">
+                            {d.priceFormatted}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)] hidden lg:table-cell text-[11px]">
+                            {(d.specs?.processor || "")
+                              .split(" ")
+                              .slice(0, 3)
+                              .join(" ")}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-[var(--color-text-dim)] hidden md:table-cell">
+                            {d.specs?.ram || "—"}GB
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono text-[var(--color-text)] font-semibold hidden lg:table-cell">
+                            {score > 0 ? (score / 1000).toFixed(1) + "K" : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -355,16 +438,16 @@ export default function DatabaseView() {
       )}
 
       {view === "cards" && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filtered.map((p) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {filtered.map((d) => (
             <div
-              key={p.id}
+              key={d.id}
               className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3 hover:border-[var(--color-accent)]/30 transition-colors"
             >
               <div className="aspect-square bg-[var(--color-surface-2)] rounded-lg flex items-center justify-center mb-2 overflow-hidden">
                 <img
-                  src={p.image}
-                  alt={p.name}
+                  src={d.image}
+                  alt={d.name}
                   className="h-full w-full object-contain p-2"
                   onError={(e) =>
                     ((e.target as HTMLImageElement).style.display = "none")
@@ -372,17 +455,17 @@ export default function DatabaseView() {
                 />
               </div>
               <div className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
-                {p.brand}
+                {d.brand}
               </div>
               <div className="text-xs font-semibold text-[var(--color-text)] truncate">
-                {p.name}
+                {d.name}
               </div>
               <div className="flex items-center justify-between mt-1.5">
                 <span className="text-[11px] font-mono text-[var(--color-accent)] font-semibold">
-                  {p.priceFormatted}
+                  {d.priceFormatted}
                 </span>
                 <span className="text-[10px] font-mono text-[var(--color-text-muted)]">
-                  {(p.benchmarks.antutu / 1000).toFixed(0)}K
+                  {d.type}
                 </span>
               </div>
             </div>
@@ -390,31 +473,17 @@ export default function DatabaseView() {
         </div>
       )}
 
-      {view === "compare" && (
-        <div className="text-center py-12 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
-          <p className="text-[var(--color-text-dim)] mb-2">
-            Use the dedicated comparator below for detailed side-by-side
-            comparisons
-          </p>
-          <a
-            href="#compare"
-            className="inline-block mt-2 px-4 py-2 bg-[var(--color-accent)] text-[var(--color-bg)] rounded-lg font-mono text-sm font-semibold"
-          >
-            Open Comparator ↓
-          </a>
-        </div>
-      )}
-
       {filtered.length === 0 && (
         <div className="text-center py-16 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
-          <p className="text-[var(--color-text-dim)] text-lg">No phones match your filters</p>
+          <p className="text-[var(--color-text-dim)] text-lg">
+            No devices match your filters
+          </p>
           <button
             onClick={() => {
               setSearch("");
               setPriceMin(0);
-              setPriceMax(250000);
+              setPriceMax(400000);
               setFilterBrand("all");
-              setFilterOIS(false);
             }}
             className="mt-3 text-[var(--color-accent)] font-mono text-sm underline"
           >

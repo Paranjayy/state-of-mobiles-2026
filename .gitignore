@@ -1,10 +1,7 @@
 node_modules/
 .next/
-build-output.log
-build-exit.log
-do-build.sh
 build.sh
-install.sh
-deploy.sh
-nohup.out
+build.log
+build-status.log
 *.log
+.DS_Store
