@@ -8,6 +8,7 @@ import BenchmarkChart from "@/components/BenchmarkChart";
 import ValueAnalyzer from "@/components/ValueAnalyzer";
 import RecentDrops from "@/components/RecentDrops";
 import CommandPalette from "@/components/CommandPalette";
+import PriceDrops from "@/components/PriceDrops";
 import { WatchlistPanel } from "@/components/Watchlist";
 
 /* ─── Reveal Hook ─── */
@@ -70,6 +71,7 @@ function Nav() {
     { label: "Database", href: "#database" },
     { label: "Bench", href: "#benchmarks" },
     { label: "Value", href: "#value" },
+    { label: "Deals", href: "#deals" },
     { label: "New", href: "#recent" },
     { label: "Compare", href: "#compare" },
     { label: "Phones", href: "#phones" },
@@ -429,6 +431,21 @@ export default function Home() {
         </Reveal>
         <Reveal delay={100}>
           <ValueAnalyzer />
+        </Reveal>
+      </section>
+
+      {/* Price Drops */}
+      <section id="deals" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <SectionHeader
+            tag="Active Deals"
+            title="Price "
+            highlight="Drops"
+            description="Current sales, bank offers, and limited-time price drops."
+          />
+        </Reveal>
+        <Reveal delay={100}>
+          <PriceDrops />
         </Reveal>
       </section>
 

@@ -16,21 +16,22 @@ export type Device = {
   verdict: string;
   pickLabel?: string;
   pickFor?: "mom" | "cousin" | "gaming" | "creator" | "business";
-  benchmarks?: {
-    antutu?: number;
-    geekbenchSingle?: number;
-    geekbenchMulti?: number;
-    batteryLife?: number;
-    chargingSpeed?: number;
-    pcbMark?: number;
-    cinebenchR23Multi?: number;
-  };
-  specs: Record<string, any>;
+  benchmarks?: any;
+  specs: any;
   releaseDate: string;
+  pros?: string[];
+  cons?: string[];
 };
 
-export default function DeviceCard({ device }: { device: Device }) {
+export default function DeviceCard({
+  device,
+  expanded = false,
+}: {
+  device: Device;
+  expanded?: boolean;
+}) {
   const [imgError, setImgError] = useState(false);
+  const [showDetails, setShowDetails] = useState(expanded);
 
   const isMom = device.pickFor === "mom";
   const isCousin = device.pickFor === "cousin";
@@ -62,7 +63,6 @@ export default function DeviceCard({ device }: { device: Device }) {
             ? "bg-[var(--color-green)]/10 text-[var(--color-green)] border-[var(--color-green)]/20"
             : "";
 
-  // Type label
   const typeLabels: Record<string, string> = {
     android: "Android",
     ios: "iOS",
@@ -70,8 +70,8 @@ export default function DeviceCard({ device }: { device: Device }) {
     foldable: "Foldable",
     macbook: "MacBook",
     ultrabook: "Ultrabook",
-    gaming: "Gaming Laptop",
-    creator: "Creator Laptop",
+    gaming: "Gaming",
+    creator: "Creator",
     convertible: "Convertible",
     business: "Business",
     "mini-pc": "Mini PC",
@@ -82,7 +82,6 @@ export default function DeviceCard({ device }: { device: Device }) {
     aio: "All-in-One",
   };
 
-  // Key specs based on type
   const getKeySpecs = () => {
     if (
       device.type === "android" ||
@@ -108,7 +107,10 @@ export default function DeviceCard({ device }: { device: Device }) {
       return [
         { label: "Display", value: device.specs.display },
         { label: "CPU", value: device.specs.processor },
-        { label: "RAM", value: `${device.specs.ram}GB` },
+        {
+          label: "RAM",
+          value: `${device.specs.ram}GB ${device.specs.ramType}`,
+        },
         {
           label: "Storage",
           value: `${device.specs.storage}GB ${device.specs.storageType}`,
@@ -141,19 +143,16 @@ export default function DeviceCard({ device }: { device: Device }) {
 
   return (
     <div
-      className={`group relative bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--color-accent)]/20 hover:shadow-[0_0_40px_rgba(184,255,87,0.04)] ${
-        ringColor ? `ring-1 ${ringColor}` : ""
-      }`}
+      className={`group relative bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden transition-all duration-300 hover:border-[var(--color-accent)]/20 hover:shadow-[0_0_40px_rgba(184,255,87,0.04)] ${ringColor ? `ring-1 ${ringColor}` : ""}`}
     >
       {device.pickLabel && (
         <div
-          className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-xs font-mono font-medium tracking-wider border ${badgeColor}`}
+          className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-[11px] font-mono font-medium tracking-wider border ${badgeColor}`}
         >
           {device.pickLabel}
         </div>
       )}
 
-      {/* Watchlist heart - top right */}
       <div className="absolute top-4 right-4 z-10">
         <WatchlistButton
           deviceId={device.id}
@@ -186,7 +185,7 @@ export default function DeviceCard({ device }: { device: Device }) {
             {device.priceFormatted}
           </span>
         </div>
-        <div className="absolute top-4 right-4 bg-[var(--color-bg)]/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-dim)] border border-[var(--color-border)]">
+        <div className="absolute bottom-3 left-3 bg-[var(--color-bg)]/80 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-dim)] border border-[var(--color-border)]">
           {typeLabels[device.type] || device.type}
         </div>
       </div>
@@ -221,7 +220,6 @@ export default function DeviceCard({ device }: { device: Device }) {
           </div>
         )}
 
-        {/* Mini benchmark strip */}
         {device.benchmarks && (
           <div className="grid grid-cols-3 gap-2 mb-3 pt-3 border-t border-[var(--color-border)]">
             {device.benchmarks.antutu && (
@@ -254,16 +252,17 @@ export default function DeviceCard({ device }: { device: Device }) {
                 </div>
               </div>
             )}
-            {device.benchmarks.batteryLife && (
-              <div className="text-center">
-                <div className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
-                  Battery
+            {device.benchmarks.batteryLife &&
+              !device.benchmarks.cinebenchR23Multi && (
+                <div className="text-center">
+                  <div className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
+                    Battery
+                  </div>
+                  <div className="text-xs font-mono text-[var(--color-text)] font-semibold">
+                    {device.benchmarks.batteryLife}h
+                  </div>
                 </div>
-                <div className="text-xs font-mono text-[var(--color-text)] font-semibold">
-                  {device.benchmarks.batteryLife}h
-                </div>
-              </div>
-            )}
+              )}
             {device.benchmarks.chargingSpeed && (
               <div className="text-center">
                 <div className="text-[9px] font-mono uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
@@ -300,11 +299,60 @@ export default function DeviceCard({ device }: { device: Device }) {
           ))}
         </div>
 
+        {/* Expanded details - pros/cons + extra specs */}
+        {showDetails && (device.pros?.length || device.cons?.length) && (
+          <div className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-3">
+            {device.pros && device.pros.length > 0 && (
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-green)] mb-1.5">
+                  ✓ Pros
+                </div>
+                <ul className="space-y-1">
+                  {device.pros.map((p, i) => (
+                    <li
+                      key={i}
+                      className="text-[12px] text-[var(--color-text-dim)] pl-3 relative before:content-['+'] before:absolute before:left-0 before:text-[var(--color-green)] before:font-bold"
+                    >
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {device.cons && device.cons.length > 0 && (
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--color-red)] mb-1.5">
+                  ✗ Cons
+                </div>
+                <ul className="space-y-1">
+                  {device.cons.map((c, i) => (
+                    <li
+                      key={i}
+                      className="text-[12px] text-[var(--color-text-dim)] pl-3 relative before:content-['-'] before:absolute before:left-0 before:text-[var(--color-red)] before:font-bold"
+                    >
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-4 p-3 bg-[var(--color-surface-2)] rounded-xl border-l-2 border-[var(--color-accent)]/40">
           <p className="text-[12px] text-[var(--color-text-dim)] leading-relaxed">
             {device.verdict}
           </p>
         </div>
+
+        {(device.pros?.length || device.cons?.length) && (
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="mt-3 w-full text-[11px] font-mono uppercase tracking-wider text-[var(--color-text-dim)] hover:text-[var(--color-accent)] transition-colors py-2 border border-[var(--color-border)] rounded-lg hover:border-[var(--color-accent)]/30"
+          >
+            {showDetails ? "− Hide" : "+ Show"} Pros & Cons
+          </button>
+        )}
       </div>
     </div>
   );
