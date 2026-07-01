@@ -5,6 +5,10 @@ import DeviceCard from "@/components/DeviceCard";
 import Comparator from "@/components/Comparator";
 import DatabaseView from "@/components/DatabaseView";
 import BenchmarkChart from "@/components/BenchmarkChart";
+import ValueAnalyzer from "@/components/ValueAnalyzer";
+import RecentDrops from "@/components/RecentDrops";
+import CommandPalette from "@/components/CommandPalette";
+import { WatchlistPanel } from "@/components/Watchlist";
 
 /* ─── Reveal Hook ─── */
 function useReveal(threshold = 0.08) {
@@ -65,6 +69,8 @@ function Nav() {
   const links = [
     { label: "Database", href: "#database" },
     { label: "Bench", href: "#benchmarks" },
+    { label: "Value", href: "#value" },
+    { label: "New", href: "#recent" },
     { label: "Compare", href: "#compare" },
     { label: "Phones", href: "#phones" },
     { label: "Tablets", href: "#tablets" },
@@ -411,6 +417,36 @@ export default function Home() {
         </Reveal>
       </section>
 
+      {/* Value Analyzer */}
+      <section id="value" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <SectionHeader
+            tag="Value Analyzer"
+            title="Best bang for "
+            highlight="your buck"
+            description="Raw scores divided by price — finds the devices that give you the most per rupee spent."
+          />
+        </Reveal>
+        <Reveal delay={100}>
+          <ValueAnalyzer />
+        </Reveal>
+      </section>
+
+      {/* Recent Drops */}
+      <section id="recent" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <SectionHeader
+            tag="Recently Dropped"
+            title="Fresh out the "
+            highlight="factory"
+            description="The newest launches, grouped by month. Stay on top of what's just hit the market."
+          />
+        </Reveal>
+        <Reveal delay={100}>
+          <RecentDrops />
+        </Reveal>
+      </section>
+
       {/* Comparator */}
       <section id="compare" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
         <Reveal>
@@ -471,6 +507,8 @@ export default function Home() {
 
       <PersonalPicks />
       <Footer />
+      <CommandPalette />
+      <WatchlistPanel />
     </div>
   );
 }

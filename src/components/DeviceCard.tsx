@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { WatchlistButton } from "./Watchlist";
 
 export type Device = {
   id: string;
@@ -40,26 +41,26 @@ export default function DeviceCard({ device }: { device: Device }) {
   const ringColor = isMom
     ? "ring-[var(--color-pink)]/30"
     : isCousin
-    ? "ring-[var(--color-blue)]/30"
-    : isGaming
-    ? "ring-[var(--color-orange)]/30"
-    : isCreator
-    ? "ring-[var(--color-purple)]/30"
-    : isBusiness
-    ? "ring-[var(--color-green)]/30"
-    : "";
+      ? "ring-[var(--color-blue)]/30"
+      : isGaming
+        ? "ring-[var(--color-orange)]/30"
+        : isCreator
+          ? "ring-[var(--color-purple)]/30"
+          : isBusiness
+            ? "ring-[var(--color-green)]/30"
+            : "";
 
   const badgeColor = isMom
     ? "bg-[var(--color-pink)]/10 text-[var(--color-pink)] border-[var(--color-pink)]/20"
     : isCousin
-    ? "bg-[var(--color-blue)]/10 text-[var(--color-blue)] border-[var(--color-blue)]/20"
-    : isGaming
-    ? "bg-[var(--color-orange)]/10 text-[var(--color-orange)] border-[var(--color-orange)]/20"
-    : isCreator
-    ? "bg-[var(--color-purple)]/10 text-[var(--color-purple)] border-[var(--color-purple)]/20"
-    : isBusiness
-    ? "bg-[var(--color-green)]/10 text-[var(--color-green)] border-[var(--color-green)]/20"
-    : "";
+      ? "bg-[var(--color-blue)]/10 text-[var(--color-blue)] border-[var(--color-blue)]/20"
+      : isGaming
+        ? "bg-[var(--color-orange)]/10 text-[var(--color-orange)] border-[var(--color-orange)]/20"
+        : isCreator
+          ? "bg-[var(--color-purple)]/10 text-[var(--color-purple)] border-[var(--color-purple)]/20"
+          : isBusiness
+            ? "bg-[var(--color-green)]/10 text-[var(--color-green)] border-[var(--color-green)]/20"
+            : "";
 
   // Type label
   const typeLabels: Record<string, string> = {
@@ -83,7 +84,11 @@ export default function DeviceCard({ device }: { device: Device }) {
 
   // Key specs based on type
   const getKeySpecs = () => {
-    if (device.type === "android" || device.type === "ios" || device.type === "foldable") {
+    if (
+      device.type === "android" ||
+      device.type === "ios" ||
+      device.type === "foldable"
+    ) {
       return [
         { label: "Display", value: device.specs.display },
         { label: "Chip", value: device.specs.processor },
@@ -92,12 +97,22 @@ export default function DeviceCard({ device }: { device: Device }) {
         { label: "Battery", value: device.specs.battery },
         { label: "Software", value: device.specs.software },
       ];
-    } else if (device.type === "ultrabook" || device.type === "gaming" || device.type === "macbook" || device.type === "creator" || device.type === "convertible" || device.type === "business") {
+    } else if (
+      device.type === "ultrabook" ||
+      device.type === "gaming" ||
+      device.type === "macbook" ||
+      device.type === "creator" ||
+      device.type === "convertible" ||
+      device.type === "business"
+    ) {
       return [
         { label: "Display", value: device.specs.display },
         { label: "CPU", value: device.specs.processor },
         { label: "RAM", value: `${device.specs.ram}GB` },
-        { label: "Storage", value: `${device.specs.storage}GB ${device.specs.storageType}` },
+        {
+          label: "Storage",
+          value: `${device.specs.storage}GB ${device.specs.storageType}`,
+        },
         { label: "GPU", value: device.specs.gpu },
         { label: "Battery", value: device.specs.battery },
       ];
@@ -105,9 +120,20 @@ export default function DeviceCard({ device }: { device: Device }) {
       return [
         { label: "CPU", value: device.specs.processor },
         { label: "Cores", value: device.specs.cores },
-        { label: "RAM", value: `${device.specs.ram}GB ${device.specs.ramType}` },
-        { label: "Storage", value: `${device.specs.storage}GB ${device.specs.storageType}` },
-        { label: "GPU", value: device.specs.gpu + (device.specs.vram ? ` ${device.specs.vram}GB` : "") },
+        {
+          label: "RAM",
+          value: `${device.specs.ram}GB ${device.specs.ramType}`,
+        },
+        {
+          label: "Storage",
+          value: `${device.specs.storage}GB ${device.specs.storageType}`,
+        },
+        {
+          label: "GPU",
+          value:
+            device.specs.gpu +
+            (device.specs.vram ? ` ${device.specs.vram}GB` : ""),
+        },
         { label: "Form", value: device.specs.formFactor },
       ];
     }
@@ -121,11 +147,20 @@ export default function DeviceCard({ device }: { device: Device }) {
     >
       {device.pickLabel && (
         <div
-          className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-[11px] font-mono font-medium tracking-wider border ${badgeColor}`}
+          className={`absolute top-4 left-4 z-10 px-3 py-1 rounded-full text-xs font-mono font-medium tracking-wider border ${badgeColor}`}
         >
           {device.pickLabel}
         </div>
       )}
+
+      {/* Watchlist heart - top right */}
+      <div className="absolute top-4 right-4 z-10">
+        <WatchlistButton
+          deviceId={device.id}
+          kind={(device as any).kind || "phone"}
+          deviceName={device.name}
+        />
+      </div>
 
       <div className="relative h-44 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] flex items-center justify-center overflow-hidden">
         {!imgError ? (
@@ -140,10 +175,10 @@ export default function DeviceCard({ device }: { device: Device }) {
             {device.type === "ios" || device.type === "macbook"
               ? "🍎"
               : device.type === "android"
-              ? "📱"
-              : device.type === "gaming" || device.type === "gaming-rig"
-              ? "🎮"
-              : "💻"}
+                ? "📱"
+                : device.type === "gaming" || device.type === "gaming-rig"
+                  ? "🎮"
+                  : "💻"}
           </div>
         )}
         <div className="absolute bottom-3 right-3 bg-[var(--color-bg)]/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[var(--color-border)]">
