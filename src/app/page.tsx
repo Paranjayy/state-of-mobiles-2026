@@ -3,8 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { categories, tablets } from "@/data/phones";
 import PhoneCard from "@/components/PhoneCard";
 import TabletCard from "@/components/TabletCard";
+import Comparator from "@/components/Comparator";
+import DatabaseView from "@/components/DatabaseView";
+import BenchmarkChart from "@/components/BenchmarkChart";
 
-/* ─── Intersection Observer Hook ─── */
+/* ─── Reveal Hook ─── */
 function useReveal(threshold = 0.08) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -18,7 +21,7 @@ function useReveal(threshold = 0.08) {
           obs.disconnect();
         }
       },
-      { threshold, rootMargin: "0px 0px -40px 0px" }
+      { threshold, rootMargin: "0px 0px -40px 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -26,7 +29,15 @@ function useReveal(threshold = 0.08) {
   return { ref, visible };
 }
 
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const { ref, visible } = useReveal();
   return (
     <div
@@ -53,13 +64,16 @@ function Nav() {
   }, []);
 
   const links = [
+    { label: "Database", href: "#database" },
+    { label: "Benchmarks", href: "#benchmarks" },
+    { label: "Compare", href: "#compare" },
     { label: "Budget", href: "#budget" },
-    { label: "Mid-Range", href: "#midrange" },
+    { label: "Mid", href: "#midrange" },
     { label: "Premium", href: "#premium" },
     { label: "Flagship", href: "#flagship" },
     { label: "Ultra", href: "#ultra" },
     { label: "Tablets", href: "#tablets" },
-    { label: "Your Picks", href: "#picks" },
+    { label: "Picks", href: "#picks" },
   ];
 
   return (
@@ -70,20 +84,29 @@ function Nav() {
           : "bg-transparent"
       }`}
     >
-      <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--color-accent)]">
+      <a
+        href="#"
+        className="font-mono text-[11px] tracking-[0.2em] uppercase text-[var(--color-accent)]"
+      >
         State of Mobiles
-      </span>
-      <div className="hidden md:flex items-center gap-5">
+      </a>
+      <div className="hidden xl:flex items-center gap-4">
         {links.map((l) => (
           <a
             key={l.href}
             href={l.href}
-            className="text-[var(--color-text-dim)] text-xs font-medium tracking-wide uppercase hover:text-[var(--color-text)] transition-colors"
+            className="text-[var(--color-text-dim)] text-[10px] font-medium tracking-wide uppercase hover:text-[var(--color-text)] transition-colors"
           >
             {l.label}
           </a>
         ))}
       </div>
+      <a
+        href="#database"
+        className="md:hidden text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent)]"
+      >
+        Search ↓
+      </a>
     </nav>
   );
 }
@@ -92,7 +115,6 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 overflow-hidden">
-      {/* Glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[var(--color-accent)]/[0.02] blur-[120px]" />
       </div>
@@ -117,18 +139,18 @@ function Hero() {
 
         <Reveal delay={200}>
           <p className="text-[var(--color-text-dim)] text-lg max-w-xl mx-auto font-light leading-relaxed mb-10">
-            Every phone worth buying in 2026 — from the cheapest 5G warriors to
-            the ultra-premium flagships. No second-hand, only new. All 5G. All
-            killers.
+            Every phone worth buying in 2026. Search, filter, compare, and
+            benchmark — the complete guide from ₹7K to ₹2.5L. All 5G. All new.
           </p>
         </Reveal>
 
         <Reveal delay={300}>
-          <div className="flex items-center justify-center gap-10 md:gap-16">
+          <div className="flex items-center justify-center gap-10 md:gap-16 mb-12">
             {[
               { num: "24", label: "Phones" },
               { num: "₹7K–2.5L", label: "Price Range" },
               { num: "6", label: "Categories" },
+              { num: "100%", label: "5G" },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="font-mono text-2xl md:text-3xl font-medium text-[var(--color-accent)]">
@@ -143,26 +165,22 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={400}>
-          <div className="mt-16 animate-bounce">
-            <a
-              href="#budget"
-              className="inline-flex flex-col items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          <a
+            href="#database"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-accent)] text-[var(--color-bg)] rounded-full font-mono text-sm font-semibold hover:scale-105 transition-transform"
+          >
+            Explore Database
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              <span className="text-[10px] font-mono uppercase tracking-[0.2em]">
-                Scroll to explore
-              </span>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M12 5v14M19 12l-7 7-7-7" />
-              </svg>
-            </a>
-          </div>
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
         </Reveal>
       </div>
     </section>
@@ -170,13 +188,7 @@ function Hero() {
 }
 
 /* ─── Category Section ─── */
-function CategorySection({
-  category,
-  index,
-}: {
-  category: (typeof categories)[0];
-  index: number;
-}) {
+function CategorySection({ category }: { category: (typeof categories)[0] }) {
   return (
     <section id={category.id} className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
       <Reveal>
@@ -227,14 +239,12 @@ function PersonalPicks() {
             <span className="italic text-[var(--color-accent)]">Picks</span>
           </h2>
           <p className="text-[var(--color-text-dim)] text-base max-w-xl mt-4 font-light">
-            Based on your specific needs and budgets — here are the phones we'd
-            actually buy.
+            Based on your specific needs and budgets.
           </p>
         </div>
       </Reveal>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Mom's Pick */}
         <Reveal delay={0}>
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--color-pink)]/[0.03] rounded-full blur-[80px]" />
@@ -249,29 +259,34 @@ function PersonalPicks() {
                 ₹12,999 · 8GB / 128GB
               </p>
               <p className="text-[var(--color-text-dim)] text-sm leading-relaxed mb-4">
-                <strong className="text-[var(--color-text)]">Why this one:</strong>{" "}
-                Stock Android means zero confusion — no bloatware, no ads, no
-                weird notifications. The pOLED display is bright and easy to read
-                even in sunlight. 8GB RAM ensures the phone stays smooth for 3+
-                years. The 50MP OIS camera takes great family photos.
+                <strong className="text-[var(--color-text)]">
+                  Why this one:
+                </strong>{" "}
+                Stock Android means zero confusion — no bloatware, no ads. The
+                pOLED display is bright and easy to read. 8GB RAM ensures the
+                phone stays smooth for 3+ years. 50MP OIS camera takes great
+                family photos.
               </p>
               <div className="flex flex-wrap gap-2 pt-4 border-t border-[var(--color-border)]">
-                {["6.7\" pOLED 120Hz", "Snapdragon 6s Gen 3", "5000mAh", "Stock Android", "33W charging"].map(
-                  (s) => (
-                    <span
-                      key={s}
-                      className="px-2 py-0.5 rounded text-[10px] font-mono border border-[var(--color-border)] text-[var(--color-text-dim)]"
-                    >
-                      {s}
-                    </span>
-                  )
-                )}
+                {[
+                  '6.7" pOLED 120Hz',
+                  "Snapdragon 6s Gen 3",
+                  "5000mAh",
+                  "Stock Android",
+                  "33W charging",
+                ].map((s) => (
+                  <span
+                    key={s}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono border border-[var(--color-border)] text-[var(--color-text-dim)]"
+                  >
+                    {s}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </Reveal>
 
-        {/* Cousin's Pick */}
         <Reveal delay={100}>
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--color-blue)]/[0.03] rounded-full blur-[80px]" />
@@ -286,24 +301,29 @@ function PersonalPicks() {
                 ₹29,999 · 8GB / 256GB
               </p>
               <p className="text-[var(--color-text-dim)] text-sm leading-relaxed mb-4">
-                <strong className="text-[var(--color-text)]">Why this one:</strong>{" "}
-                Snapdragon 8s Gen 4 under 30K is absolutely insane value. This
-                chip rivals last year&apos;s flagship Snapdragon 8 Gen 3. 100W
+                <strong className="text-[var(--color-text)]">
+                  Why this one:
+                </strong>{" "}
+                Snapdragon 8s Gen 4 under 30K is absolutely insane value. 100W
                 SUPERVOOC means full charge in ~25 minutes. LTPO AMOLED display
                 is flagship-grade. OxygenOS is clean and fast. 256GB storage
                 means no worrying about space.
               </p>
               <div className="flex flex-wrap gap-2 pt-4 border-t border-[var(--color-border)]">
-                {["6.78\" LTPO AMOLED", "Snapdragon 8s Gen 4", "5800mAh", "100W SUPERVOOC", "256GB"].map(
-                  (s) => (
-                    <span
-                      key={s}
-                      className="px-2 py-0.5 rounded text-[10px] font-mono border border-[var(--color-border)] text-[var(--color-text-dim)]"
-                    >
-                      {s}
-                    </span>
-                  )
-                )}
+                {[
+                  '6.78" LTPO AMOLED',
+                  "Snapdragon 8s Gen 4",
+                  "5800mAh",
+                  "100W SUPERVOOC",
+                  "256GB",
+                ].map((s) => (
+                  <span
+                    key={s}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono border border-[var(--color-border)] text-[var(--color-text-dim)]"
+                  >
+                    {s}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -338,8 +358,87 @@ export default function Home() {
       <Nav />
       <Hero />
 
-      {categories.map((cat, i) => (
-        <CategorySection key={cat.id} category={cat} index={i} />
+      {/* Database / Search & Filter */}
+      <section id="database" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px w-6 bg-[var(--color-accent)]" />
+              <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[var(--color-accent)]">
+                The Database
+              </span>
+            </div>
+            <h2 className="font-display text-[clamp(2rem,5vw,4rem)] font-light leading-[1.05] tracking-tight">
+              Search, sort,{" "}
+              <span className="italic text-[var(--color-accent)]">filter</span>
+            </h2>
+            <p className="text-[var(--color-text-dim)] text-base max-w-xl mt-4 font-light">
+              Every phone in the database, queryable. Like a Notion table for
+              mobile phones.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={100}>
+          <DatabaseView />
+        </Reveal>
+      </section>
+
+      {/* Benchmarks */}
+      <section
+        id="benchmarks"
+        className="py-16 md:py-24 px-5 max-w-7xl mx-auto"
+      >
+        <Reveal>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px w-6 bg-[var(--color-accent)]" />
+              <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[var(--color-accent)]">
+                Real Benchmarks
+              </span>
+            </div>
+            <h2 className="font-display text-[clamp(2rem,5vw,4rem)] font-light leading-[1.05] tracking-tight">
+              The{" "}
+              <span className="italic text-[var(--color-accent)]">numbers</span>
+            </h2>
+            <p className="text-[var(--color-text-dim)] text-base max-w-xl mt-4 font-light">
+              AnTuTu scores, Geekbench performance, battery capacity, charging
+              speed — actual numbers, no marketing fluff.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={100}>
+          <BenchmarkChart />
+        </Reveal>
+      </section>
+
+      {/* Comparator */}
+      <section id="compare" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-px w-6 bg-[var(--color-accent)]" />
+              <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[var(--color-accent)]">
+                Head-to-Head
+              </span>
+            </div>
+            <h2 className="font-display text-[clamp(2rem,5vw,4rem)] font-light leading-[1.05] tracking-tight">
+              Side by{" "}
+              <span className="italic text-[var(--color-accent)]">side</span>
+            </h2>
+            <p className="text-[var(--color-text-dim)] text-base max-w-xl mt-4 font-light">
+              Pick any two phones. See how they stack up across every dimension
+              that matters.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={100}>
+          <Comparator />
+        </Reveal>
+      </section>
+
+      {/* Categories */}
+      {categories.map((cat) => (
+        <CategorySection key={cat.id} category={cat} />
       ))}
 
       {/* Tablets */}
