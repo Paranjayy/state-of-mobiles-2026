@@ -1112,6 +1112,7 @@ export const phones: Phone[] = [
     releaseDate: "2026-06",
     pros: ["8000mAh battery — two-day battery life", "OxygenOS is clean", "IP64 rating", "120Hz display"],
     cons: ["HD+ resolution is disappointing at 6.8"", "Only 4GB RAM", "Single speaker", "Plastic build"],
+  },
 
   {
     id: "moto-edge-60-pro",
