@@ -9,6 +9,7 @@ import ValueAnalyzer from "@/components/ValueAnalyzer";
 import RecentDrops from "@/components/RecentDrops";
 import CommandPalette from "@/components/CommandPalette";
 import PriceDrops from "@/components/PriceDrops";
+import AmazonSale from "@/components/AmazonSale";
 import { WatchlistPanel } from "@/components/Watchlist";
 
 /* ─── Reveal Hook ─── */
@@ -71,6 +72,7 @@ function Nav() {
     { label: "Database", href: "#database" },
     { label: "Bench", href: "#benchmarks" },
     { label: "Value", href: "#value" },
+    { label: "Sale", href: "#sale" },
     { label: "Deals", href: "#deals" },
     { label: "New", href: "#recent" },
     { label: "Compare", href: "#compare" },
@@ -431,6 +433,16 @@ export default function Home() {
         </Reveal>
         <Reveal delay={100}>
           <ValueAnalyzer />
+        </Reveal>
+      </section>
+
+      {/* Amazon Sale */}
+      <section id="sale" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
+        <Reveal>
+          <SectionHeader tag="Tomorrow Sale" title="Amazon " highlight="Great Indian Festival" description="July 2-3 sale countdown with live deals, bank offers, and coupon codes." />
+        </Reveal>
+        <Reveal delay={100}>
+          <AmazonSale />
         </Reveal>
       </section>
 
